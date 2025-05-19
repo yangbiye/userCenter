@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: user-center
+
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mydb
+    username: root
+    password: root1234
+  session:
+    timeout: 86400 #失效信息
+
+server:
+  port: 8080
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+  global-config:
+    db-config:
+      logic-delete-field: isDelete #库中逻辑删除字段名（使用mybatis-plus帮助,项目中的所有删除均为逻辑删除，执行delete不会真正删,只会修改字段值，查询时也不会查到isDelete值为1的数据，除非特殊处理）,实体类相关字段需要加上@TableLogic
+      logic-delete-value: 1
+      logic-not-delete-value: 0
