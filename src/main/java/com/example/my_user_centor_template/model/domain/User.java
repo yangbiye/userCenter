@@ -90,4 +90,10 @@ public class User {
      */
     @TableField(value = "userRole")
     private Integer userRole;
+
+    /**
+     * 注册编号
+     */
+    @TableField(value = "userCode")
+    private String userCode;
 }

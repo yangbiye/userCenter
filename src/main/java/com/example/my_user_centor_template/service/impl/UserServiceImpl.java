@@ -16,6 +16,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.example.my_user_centor_template.constant.UserConstant.USER_LOGIN_STATE;
+
 /**
  * 用户服务实现类
  *
@@ -37,13 +39,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private static final String pattern = "^[a-zA-Z0-9_]+$";
 
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(String userAccount, String userPassword, String checkPassword,String userCode) {
         //1.校验
 
-        if(StringUtils.isAnyBlank(userAccount,userPassword,checkPassword)){
+        if(StringUtils.isAnyBlank(userAccount,userPassword,checkPassword,userCode)){
             return -1;
         }
-        if(userAccount.length() < 4 || userPassword.length() < 8 || !userPassword.equals(checkPassword)){
+        if(userAccount.length() < 4 || userPassword.length() < 8 || !userPassword.equals(checkPassword)||userCode.length() > 5){
             return -1;
         }
         //账号不能包含特殊字符(只允许字母、数字、下划线)
@@ -58,6 +60,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if(count > 0){
             return -1;
         }
+        //用户编码不可重复（注册次数较少，所以不复用代码减少数据库访问）
+        queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userCode", userCode);
+        count = this.count(queryWrapper);
+        if(count > 0){
+            return -1;
+        }
 
         //2.密码加密
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT+userPassword).getBytes());
@@ -66,6 +75,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         User user = new User();
         user.setUserAccount(userAccount);
         user.setUserPassword(encryptPassword);
+        user.setUserCode(userCode);
         boolean saveResult = this.save(user);
         if(!saveResult){
             return -1;
@@ -78,16 +88,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public User doLogin(String userAccount, String userPassword, HttpServletRequest request) {
         // 1.校验
         if(StringUtils.isAnyBlank(userAccount,userPassword)){
-            System.out.println("登陆失败1");
             return null;
         }
         if(userAccount.length() < 4 || userPassword.length() < 8 ){
-            System.out.println("登陆失败2");
             return null;
         }
         // 账号不能包含特殊字符(只允许字母、数字、下划线)
         if(!userAccount.matches(pattern)){
-            System.out.println("登陆失败3");
             return null;
         }
         // 2.密码加密
@@ -99,13 +106,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         User user = this.getOne(queryWrapper);
         if(user == null) {
             log.info("login fail,userAccount cannot match userPassword");
-            System.out.println("登陆失败4");
             return null;
         }
         //3.用户脱敏
         User safetyUser = getSafetyUser(user);
         // 4.记录用户登录态
-        request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, safetyUser);
+        request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
         return safetyUser;
     }
 
@@ -128,6 +134,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     /**
+     * 用户注销
+     * @param request http请求:用于获取当前用户
+     * @return
+     */
+    @Override
+    public int userLogout(HttpServletRequest request) {
+        //移除登录态
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        return 1;
+    }
+
+    /**
      * 用户信息脱敏
      */
     public User getSafetyUser(User originUser) {
@@ -141,6 +159,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         safetyUser.setEmail(originUser.getEmail());
         safetyUser.setUserRole(originUser.getUserRole());
         safetyUser.setUserStatus(0);
+        safetyUser.setUserCode(originUser.getUserCode());
         safetyUser.setCreateTime(originUser.getCreateTime());
         return safetyUser;
     }

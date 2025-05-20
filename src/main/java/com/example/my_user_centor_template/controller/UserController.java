@@ -37,11 +37,12 @@ public class UserController {
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String CheckPassword = userRegisterRequest.getCheckPassword();
+        String userCode = userRegisterRequest.getUserCode();
         //controller对请求参数本身校验(与service层中的校验不冲突，service是业务逻辑校验，会被其他类调用，而此处仅仅是请求校验)
-        if(StringUtils.isAnyBlank(userAccount,userPassword,CheckPassword)){
+        if(StringUtils.isAnyBlank(userAccount,userPassword,CheckPassword,userCode)){
             return null;
         }
-        return userService.userRegister(userAccount, userPassword, CheckPassword);
+        return userService.userRegister(userAccount, userPassword, CheckPassword,userCode);
     }
 
     @PostMapping("/login")
@@ -55,6 +56,12 @@ public class UserController {
             return null;
         }
         return userService.doLogin(userAccount, userPassword,request);
+    }
+
+    @PostMapping("/logout")
+    public Integer userLogout(HttpServletRequest request) {
+        userService.userLogout(request);
+        return 1;
     }
 
     @GetMapping("/search")

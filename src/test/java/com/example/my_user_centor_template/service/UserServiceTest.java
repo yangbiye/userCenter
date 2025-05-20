@@ -40,51 +40,51 @@ class UserServiceTest {
         String userAccount = "yby_test_2";
         String password = "";
         String checkPassword = "123456";
-
+        String userCode = "1";
         //空密码
-        long testResult = userService.userRegister(userAccount, password, checkPassword);
+        long testResult = userService.userRegister(userAccount, password, checkPassword,userCode);
         Assertions.assertEquals(-1, testResult);
 
         //账号小于四位
         userAccount = "y";
-        testResult = userService.userRegister(userAccount, password, checkPassword);
+        testResult = userService.userRegister(userAccount, password, checkPassword,userCode);
         Assertions.assertEquals(-1, testResult);
 
         //密码小于八位
         userAccount = "yby_test_2";
         password = "123456";
-        testResult = userService.userRegister(userAccount, password, checkPassword);
+        testResult = userService.userRegister(userAccount, password, checkPassword,userCode);
         Assertions.assertEquals(-1, testResult);
 
         //账号特殊字符
         userAccount = "！ybyaa";
         password = "12345678";
         checkPassword = "12345678";
-        testResult = userService.userRegister(userAccount, password, checkPassword);
+        testResult = userService.userRegister(userAccount, password, checkPassword,userCode);
         Assertions.assertEquals(-1, testResult);
 
         userAccount = "y@byaa";
-        testResult = userService.userRegister(userAccount, password, checkPassword);
+        testResult = userService.userRegister(userAccount, password, checkPassword,userCode);
         Assertions.assertEquals(-1, testResult);
 
         userAccount = "yb--yaa";
-        testResult = userService.userRegister(userAccount, password, checkPassword);
+        testResult = userService.userRegister(userAccount, password, checkPassword,userCode);
         Assertions.assertEquals(-1, testResult);
 
         //确认密码不等
         checkPassword = "123456789";
-        testResult = userService.userRegister(userAccount, password, checkPassword);
+        testResult = userService.userRegister(userAccount, password, checkPassword,userCode);
         Assertions.assertEquals(-1, testResult);
 
         //账户重复
         userAccount = "yby_test_1";
         password = "123456789";
-        testResult = userService.userRegister(userAccount, password, checkPassword);
+        testResult = userService.userRegister(userAccount, password, checkPassword,userCode);
         Assertions.assertEquals(-1, testResult);
 
         //成功测试
         userAccount = "yby_test_3";
-        testResult = userService.userRegister(userAccount, password, checkPassword);
+        testResult = userService.userRegister(userAccount, password, checkPassword,userCode);
         Assertions.assertTrue(testResult > 0);
     }
 }
