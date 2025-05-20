@@ -1,6 +1,10 @@
 package com.example.my_user_centor_template.controller;
 
+import com.example.my_user_centor_template.common.BaseResponse;
+import com.example.my_user_centor_template.common.ErrorCode;
+import com.example.my_user_centor_template.common.ResultUtils;
 import com.example.my_user_centor_template.constant.UserConstant;
+import com.example.my_user_centor_template.exception.BusinessException;
 import com.example.my_user_centor_template.model.domain.User;
 import com.example.my_user_centor_template.model.request.UserLoginRequest;
 import com.example.my_user_centor_template.model.request.UserRegisterRequest;
@@ -30,9 +34,9 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public Long userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
+    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
         if(userRegisterRequest == null){
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
@@ -40,52 +44,68 @@ public class UserController {
         String userCode = userRegisterRequest.getUserCode();
         //controller对请求参数本身校验(与service层中的校验不冲突，service是业务逻辑校验，会被其他类调用，而此处仅仅是请求校验)
         if(StringUtils.isAnyBlank(userAccount,userPassword,CheckPassword,userCode)){
-            return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        return userService.userRegister(userAccount, userPassword, CheckPassword,userCode);
+        long result = userService.userRegister(userAccount, userPassword, CheckPassword,userCode);
+        return ResultUtils.success(result);
     }
 
     @PostMapping("/login")
-    public User userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
+    public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
         if(userLoginRequest == null){
-            return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR);
         }
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
         if(StringUtils.isAnyBlank(userAccount,userPassword)){
-            return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        return userService.doLogin(userAccount, userPassword,request);
+        User user = userService.doLogin(userAccount, userPassword, request);
+        return ResultUtils.success(user);
+
     }
 
     @PostMapping("/logout")
-    public Integer userLogout(HttpServletRequest request) {
-        userService.userLogout(request);
-        return 1;
+    public BaseResponse<Integer> userLogout(HttpServletRequest request) {
+        int result = userService.userLogout(request);
+        return ResultUtils.success(result);
+    }
+
+    @GetMapping("/current")
+    public BaseResponse<User> getCurrentUser(HttpServletRequest request) {
+        User currentUser = userService.getCurrentUser(request);
+        if(currentUser == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        return ResultUtils.success(currentUser);
     }
 
     @GetMapping("/search")
-    public List<User> searchUser(String userName, HttpServletRequest request) {
+    public BaseResponse<List<User>> searchUser(String userName, HttpServletRequest request) {
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         User user = (User) userObj;
-        System.out.println(user.getUsername());
         //仅管理员可查询
         if(!isAdmin(request)){
-            return new ArrayList<>();
+            throw new BusinessException(ErrorCode.NO_AUTH,"非管理员，不可执行此操作");
         }
-        return userService.userSearch(userName);
+        List<User> users = userService.userSearch(userName);
+        return ResultUtils.success(users);
     }
 
     @PostMapping("/delete")
-    public boolean userDelete(@RequestBody long id, HttpServletRequest request) {
+    public BaseResponse<Boolean> userDelete(@RequestBody long id, HttpServletRequest request) {
         if(id < 0){
-            return false;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         //仅管理员可删
         if(!isAdmin(request)){
-            return false;
+            throw new BusinessException(ErrorCode.NO_AUTH,"非管理员，不可执行此操作");
         }
-        return userService.userDelete(id);
+        boolean result =  userService.userDelete(id);
+        if(!result){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"删除用户失败");
+        }
+        return ResultUtils.success(result);
     }
 
 

@@ -57,4 +57,12 @@ public interface UserService extends IService<User> {
      * @return 成功的标识
      */
     int userLogout(HttpServletRequest request);
+
+    /**\
+     * 获取当前用户
+     *
+     * @param request http请求:用于获取当前用户
+     * @return
+     */
+    User getCurrentUser(HttpServletRequest request);
 }
